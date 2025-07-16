@@ -1,0 +1,6 @@
+framework module Pods_SampleiOSApp_CTContentExtension {
+  umbrella header "Pods-SampleiOSApp-CTContentExtension-umbrella.h"
+
+  export *
+  module * { export * }
+}
