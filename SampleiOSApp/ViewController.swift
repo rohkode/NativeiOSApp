@@ -230,7 +230,7 @@ class ViewController: UIViewController {
 
                     try fileManager.removeItem(atPath: fullPath)
 
-                    print("✅ Deleted file:", file)
+                    print("Deleted file:", file)
 
                 }
 
@@ -274,7 +274,7 @@ class ViewController: UIViewController {
 
             CleverTap.autoIntegrate()
 
-            print("✅ CleverTap reset complete")
+            print("CleverTap reset complete")
 
         }
 
