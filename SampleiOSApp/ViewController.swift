@@ -15,6 +15,18 @@ class ViewController: UIViewController {
     
     @IBOutlet weak var etPhone: UITextField!
     
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        let tap = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        tap.cancelsTouchesInView = false   // important so buttons still work
+        view.addGestureRecognizer(tap)
+    }
+
+    @objc func dismissKeyboard() {
+        view.endEditing(true)
+    }
+    
     //btnUpdate
     @IBOutlet weak var UpdIdentity: UITextField!
     
@@ -44,7 +56,6 @@ class ViewController: UIViewController {
         completion?(false)
     }
     
-
     
     @IBAction func btnLogin(_ sender: Any) {
         
@@ -100,7 +111,7 @@ class ViewController: UIViewController {
 
             // optional fields. controls whether the user will be sent email, push etc.
             "MSG-email": true as AnyObject,                     // Disable email notifications
-            "MSG-push": false as AnyObject,                       // Enable push notifications
+            "MSG-push": true as AnyObject,                       // Enable push notifications
             "MSG-sms": true as AnyObject,                       // Disable SMS notifications
             "MSG-dndPhone": false as AnyObject,                   // Opt out phone number from SMS notifications
             "MSG-dndEmail": false as AnyObject,                   // Opt out email from email notifications
@@ -193,6 +204,82 @@ class ViewController: UIViewController {
         
     }
     
+    @IBAction func btnLogout(_ sender: Any) {
+
+        guard let accountId = CleverTap.sharedInstance()?.config.accountId else {
+            return
+        }
+
+        let libraryPath = NSSearchPathForDirectoriesInDomains(
+            .libraryDirectory,
+            .userDomainMask,
+            true
+        ).first!
+
+        let fileManager = FileManager.default
+
+        do {
+
+            let files = try fileManager.contentsOfDirectory(atPath: libraryPath)
+
+            for file in files {
+
+                if file.contains("clevertap-\(accountId)") {
+
+                    let fullPath = "\(libraryPath)/\(file)"
+
+                    try fileManager.removeItem(atPath: fullPath)
+
+                    print("✅ Deleted file:", file)
+
+                }
+
+            }
+
+        } catch {
+
+            print("Error deleting CleverTap files:", error)
+
+        }
+
+
+        // Clear UserDefaults
+
+        let defaults = UserDefaults.standard
+
+        for key in defaults.dictionaryRepresentation().keys {
+
+            if key.lowercased().contains("wizrocket") ||
+               key.lowercased().contains("wzrk") {
+
+                defaults.removeObject(forKey: key)
+
+            }
+
+        }
+
+        defaults.synchronize()
+
+
+        // Clear App Group
+
+        let shared = UserDefaults(suiteName: "group.ct12.rnsample")
+
+        shared?.removePersistentDomain(forName: "group.ct12.rnsample")
+
+        shared?.synchronize()
+
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+
+            CleverTap.autoIntegrate()
+
+            print("✅ CleverTap reset complete")
+
+        }
+
+    }
+
     func showToast(message : String, font: UIFont) {
         
         let toastLabel = UILabel(frame: CGRect(x: self.view.frame.size.width/2 - 75, y: self.view.frame.size.height-100, width: 150, height: 35))

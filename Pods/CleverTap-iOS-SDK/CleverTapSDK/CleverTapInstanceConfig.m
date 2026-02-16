@@ -30,6 +30,7 @@
     [coder encodeObject: _cryptManager forKey:@"cryptManager"];
     [coder encodeBool:_enableFileProtection forKey:@"enableFileProtection"];
     [coder encodeObject:_handshakeDomain forKey:@"handshakeDomain"];
+    [coder encodeBool: _encryptionInTransitEnabled forKey:@"encryptionInTransitEnabled"];
 }
 
 - (nullable instancetype)initWithCoder:(nonnull NSCoder *)coder {
@@ -56,6 +57,7 @@
         _cryptManager = [coder decodeObjectForKey:@"cryptManager"];
         _enableFileProtection = [coder decodeBoolForKey:@"enableFileProtection"];
         _handshakeDomain = [coder decodeObjectForKey:@"handshakeDomain"];
+        _encryptionInTransitEnabled = [coder decodeBoolForKey:@"encryptionInTransitEnabled"];
     }
     return self;
 }
@@ -231,19 +233,20 @@
     _encryptionLevel = isDefault ? plist.encryptionLevel : CleverTapEncryptionNone;
     _enableFileProtection = isDefault ? plist.enableFileProtection : NO;
     _handshakeDomain = isDefault ? plist.handshakeDomain : nil;
-    if (isDefault) {
-        _cryptManager = [[CTEncryptionManager alloc] initWithAccountID:_accountId encryptionLevel:_encryptionLevel isDefaultInstance:isDefault];
-    }
+    _encryptionInTransitEnabled = isDefault ? plist.encryptionInTransitEnabled : NO;
+    
+    // Initialise cryptManager with 0 encryption level for custom instance also.
+    _cryptManager = [[CTEncryptionManager alloc] initWithAccountID:_accountId encryptionLevel:_encryptionLevel isDefaultInstance:isDefault];
 }
 
 - (void) checkIfAvailableAccountId:(NSString *)accountId
                        accountToken:(NSString *)accountToken {
     if (accountId.length <= 0) {
-        CleverTapLogStaticInfo("CleverTap accountId is empty");
+        CleverTapLogStaticInfo(@"CleverTap accountId is empty");
     }
     
     if (accountToken.length <= 0) {
-        CleverTapLogStaticInfo("CleverTap accountToken is empty");
+        CleverTapLogStaticInfo(@"CleverTap accountToken is empty");
     }
 }
 
@@ -252,7 +255,7 @@
         _encryptionLevel = encryptionLevel;
         _cryptManager = [[CTEncryptionManager alloc] initWithAccountID:_accountId encryptionLevel:_encryptionLevel isDefaultInstance:_isDefaultInstance];
     } else {
-        CleverTapLogStaticInfo("CleverTap Encryption level for default instance can't be updated from setEncryptionLevel method");
+        CleverTapLogStaticInfo(@"CleverTap Encryption level for default instance can't be updated from setEncryptionLevel method");
     }
 }
 
@@ -260,7 +263,7 @@
     if (!_isDefaultInstance) {
         _enableFileProtection = enableFileProtection;
     } else {
-        CleverTapLogStaticInfo("CleverTap enable file protection for default instance can't be updated from setEnableFileProtection method");
+        CleverTapLogStaticInfo(@"CleverTap enable file protection for default instance can't be updated from setEnableFileProtection method");
     }
 }
 
@@ -268,7 +271,16 @@
     if (!_isDefaultInstance) {
         _handshakeDomain = handshakeDomain;
     } else {
-        CleverTapLogStaticInfo("CleverTap handshake domain for default instance can't be updated from setHandshakeDomain method");
+        CleverTapLogStaticInfo(@"CleverTap handshake domain for default instance can't be updated from setHandshakeDomain method");
     }
 }
+
+- (void)setEncryptionInTransitEnabled:(BOOL)encryptionInTransitEnabled {
+    if (!_isDefaultInstance) {
+        _encryptionInTransitEnabled = encryptionInTransitEnabled;
+    } else {
+        CleverTapLogStaticInfo(@"CleverTap encryptionInTransitEnabled for default instance can't be enabled from setEncryptionInTransitEnabled method");
+    }
+}
+
 @end

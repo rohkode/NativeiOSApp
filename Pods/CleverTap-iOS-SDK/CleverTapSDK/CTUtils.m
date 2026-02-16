@@ -1,5 +1,6 @@
 #include <math.h>
 #import "CTUtils.h"
+#import "CTConstants.h"
 
 @implementation CTUtils
 
@@ -99,6 +100,10 @@
     }
 }
 
++ (void)runAsyncMainQueue:(void (^)(void))block {
+    dispatch_async(dispatch_get_main_queue(), block);
+}
+
 + (double)haversineDistance:(CLLocationCoordinate2D)coordinateA coordinateB:(CLLocationCoordinate2D)coordinateB {
     // The Earth radius ranges from a maximum of about 6378 km (equatorial)
     // to a minimum of about 6357 km (polar).
@@ -170,6 +175,25 @@
     NSString *normalizedSecondName = [CTUtils getNormalizedName:secondName];
     
     return [normalizedFirstName isEqualToString:normalizedSecondName];
+}
+
++ (BOOL)isValidCleverTapId:(NSString *)cleverTapID {
+    NSString *allowedCharacters = @"[=|<>;+.A-Za-z0-9()!:$@_-]*";
+    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF MATCHES %@", allowedCharacters];
+    if (!cleverTapID) {
+        CleverTapLogStaticInternal(@"CleverTapUseCustomId has been specified true in Info.plist but custom CleverTap ID passed is NULL.");
+        return NO;
+    } else if(cleverTapID.length <= 0){
+        CleverTapLogStaticInfo(@"CleverTapUseCustomId has been specified true in Info.plist but custom CleverTap ID passed is empty.");
+        return NO;
+    } else if (cleverTapID.length > 64) {
+        CleverTapLogStaticInfo(@"Custom CleverTap ID passed is greater than 64 characters.");
+        return NO;
+    } else if (![predicate evaluateWithObject:cleverTapID]) {
+        CleverTapLogStaticInfo(@"Custom CleverTap ID cannot contain special characters apart from (, ), !, :, @, $, _, and -");
+        return NO;
+    }
+    return YES;
 }
 
 @end

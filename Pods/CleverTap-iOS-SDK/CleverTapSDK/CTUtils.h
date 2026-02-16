@@ -11,6 +11,7 @@
 + (NSString *)jsonObjectToString:(id)object;
 + (NSString *)getKeyWithSuffix:(NSString *)suffix accountID:(NSString *)accountID;
 + (void)runSyncMainQueue:(void (^)(void))block;
++ (void)runAsyncMainQueue:(void (^)(void))block;
 + (double)haversineDistance:(CLLocationCoordinate2D)coordinateA coordinateB:(CLLocationCoordinate2D)coordinateB;
 + (NSNumber * _Nullable)numberFromString:(NSString * _Nullable)string;
 + (NSNumber * _Nullable)numberFromString:(NSString * _Nullable)string withLocale:(NSLocale * _Nullable)locale;
@@ -24,5 +25,7 @@
  * Check if two event/property names are equal with applied CT normalization
  */
 + (BOOL)areEqualNormalizedName:(NSString * _Nullable)firstName andName:(NSString * _Nullable)secondName;
+
++ (BOOL)isValidCleverTapId:(NSString *_Nullable)cleverTapID;
 
 @end

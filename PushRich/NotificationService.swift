@@ -12,14 +12,24 @@ class NotificationService: CTNotificationServiceExtension {
      override func didReceive(_ request: UNNotificationRequest, withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void) {
          print("🚀 NSE called — Notification payload: \(request.content.userInfo)")
                  let userDefaults = UserDefaults(suiteName: "group.ct12.rnsample")
+                 let isLoggedIn = userDefaults?.bool(forKey: "isLoggedIn") ?? false
                  let userId = userDefaults?.object(forKey: "identity")
                  let userEmail = userDefaults?.object(forKey: "email")
              
-                 if(userId != nil){
-                     let profile: Dictionary<String, Any> = [
-                         "Identity": userId as Any,         // String or number
-                         "Email":userEmail as Any
-                     ]
+                 if isLoggedIn,
+                            let id = userId,
+                            let email = userEmail {
+
+                             let profile: [String: Any] = [
+                                 "Identity": id,
+                                 "Email": email
+                             ]
+//                 if(userId != nil){
+//                     CleverTap.sharedInstance()?.onUserLogin(profile)
+//                     let profile: Dictionary<String, Any> = [
+//                         "Identity": userId as Any,         // String or number
+//                         "Email":userEmail as Any
+//                     ]
 
                      CleverTap.sharedInstance()?.onUserLogin(profile)
                  }

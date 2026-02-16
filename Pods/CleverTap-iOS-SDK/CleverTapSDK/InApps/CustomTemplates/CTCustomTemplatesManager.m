@@ -97,7 +97,7 @@ static NSMutableArray<id<CTTemplateProducer>> *templateProducers;
           andFileDownloader:(CTFileDownloader *)fileDownloader {
     CTCustomTemplate *template = self.templates[notification.customTemplateInAppData.templateName];
     if (!template) {
-        CleverTapLogStaticDebug("%@: Template with name: %@ not registered.", self, notification.customTemplateInAppData.templateName);
+        CleverTapLogStaticDebug(@"%@: Template with name: %@ not registered.", self, notification.customTemplateInAppData.templateName);
         return NO;
     }
 
@@ -123,19 +123,19 @@ static NSMutableArray<id<CTTemplateProducer>> *templateProducers;
 - (void)closeNotification:(CTInAppNotification *)notification {
     NSString *templateName = notification.customTemplateInAppData.templateName;
     if (!templateName) {
-        CleverTapLogStaticDebug("%@: No template name set in the notification template data.", [self class]);
+        CleverTapLogStaticDebug(@"%@: No template name set in the notification template data.", [self class]);
         return;
     }
     
     CTCustomTemplate *template = self.templates[templateName];
     if (!template) {
-        CleverTapLogStaticDebug("%@: Template with name: %@ not registered.", [self class], templateName);
+        CleverTapLogStaticDebug(@"%@: Template with name: %@ not registered.", [self class], templateName);
         return;
     }
     
     CTTemplateContext *context = [self activeContextForTemplate:templateName];
     if (!context) {
-        CleverTapLogStaticDebug("%@: Cannot find active context for template: %@.", [self class], templateName);
+        CleverTapLogStaticDebug(@"%@: Cannot find active context for template: %@.", [self class], templateName);
         return;
     }
     
@@ -188,6 +188,11 @@ static NSMutableArray<id<CTTemplateProducer>> *templateProducers;
     NSMutableDictionary *definitions = [NSMutableDictionary dictionary];
     NSDictionary *templates = [self templates];
     [templates enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull templateKey, CTCustomTemplate * _Nonnull template, BOOL * _Nonnull stop) {
+        if (template.isSystemDefined) {
+            // Don't add system defined templates in sync payload.
+            return;
+        }
+
         NSMutableDictionary *templateData = [NSMutableDictionary dictionary];
         templateData[@"type"] = template.templateType;
 

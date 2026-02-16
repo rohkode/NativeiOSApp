@@ -42,6 +42,11 @@
 #import "CTTemplateContext.h"
 #import "CTCustomTemplatesManager.h"
 #import "CTJsonTemplateProducer.h"
+#import "CTInAppStore.h"
+#import "CTSwitchUserDelegate.h"
+#import "CTDelayedInAppResult.h"
+#import "CTInActionResult.h"
+#import "CTTimerResult.h"
 
 FOUNDATION_EXPORT double CleverTapSDKVersionNumber;
 FOUNDATION_EXPORT const unsigned char CleverTapSDKVersionString[];

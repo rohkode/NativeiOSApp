@@ -44,6 +44,14 @@
 #import <SDWebImage/UIImageView+WebCache.h>
 #import <SDWebImage/SDAnimatedImageView.h>
 #endif
+#if __has_include(<CleverTapSDK/CleverTapSDK-Swift.h>)
+#import <CleverTapSDK/CleverTapSDK-Swift.h>
+#else
+#import "CleverTapSDK-Swift.h"
+#endif
+#import "CTTimerResult.h"
+#import "CTDelayedInAppResult.h"
+#import "CTInActionResult.h"
 
 static const void *const kNotificationQueueKey = &kNotificationQueueKey;
 static const NSString *kInAppNotificationKey = @"inAppNotification";
@@ -84,6 +92,8 @@ static NSMutableArray<NSArray *> *pendingNotifications;
 @property (nonatomic, strong) CTCustomTemplatesManager *templatesManager;
 
 @property (nonatomic, strong, readonly) NSString *imageInterstitialHtml;
+@property (nonatomic, strong) CTInAppScheduler *inAppDelayManager;
+@property (nonatomic, strong) CTInAppScheduler *inAppInActionManager;
 
 @end
 
@@ -99,7 +109,7 @@ static NSMutableArray<NSArray *> *pendingNotifications;
 }
 
 - (instancetype _Nonnull)initWithCleverTap:(CleverTap * _Nonnull)instance
-                            dispatchQueueManager:(CTDispatchQueueManager * _Nonnull)dispatchQueueManager
+                      dispatchQueueManager:(CTDispatchQueueManager * _Nonnull)dispatchQueueManager
                             inAppFCManager:(CTInAppFCManager *)inAppFCManager
                          impressionManager:(CTImpressionManager *)impressionManager
                                 inAppStore:(CTInAppStore *)inAppStore
@@ -113,13 +123,28 @@ static NSMutableArray<NSArray *> *pendingNotifications;
         self.inAppStore = inAppStore;
         self.templatesManager = templatesManager;
         self.fileDownloader = fileDownloader;
-        
+        [self createDelayedInAppScheduler];
+        [self createInActionInAppScheduler];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(onDisplayPendingNotification:)
                                                      name:[self.class pendingNotificationKey:self.config.accountId]
                                                    object:nil];
     }
     return self;
+}
+
+- (void)createDelayedInAppScheduler {
+    InAppTimerManager *timerManager = [[InAppTimerManager alloc]initWithTagSuffix:@"Delayed"];
+    DelayedInAppStorageStrategy *strategy = [[DelayedInAppStorageStrategy alloc] initWithDelayedLegacyInAppStore: self.inAppStore];
+    DelayedInAppDataExtractor *extractor = [[DelayedInAppDataExtractor alloc] init];
+    self.inAppDelayManager = [[CTInAppScheduler alloc] initWithTimerManager:timerManager storageStrategy:strategy dataExtractor:extractor];
+}
+
+- (void)createInActionInAppScheduler {
+    InAppTimerManager *timerManager = [[InAppTimerManager alloc]initWithTagSuffix:@"InAction"];
+    InActionDataExtractor *extractor = [[InActionDataExtractor alloc] init];
+    InactionInAppStorageStrategy *strategy = [[InactionInAppStorageStrategy alloc]init];
+    self.inAppInActionManager = [[CTInAppScheduler alloc] initWithTimerManager:timerManager storageStrategy:strategy dataExtractor:extractor];
 }
 
 - (void)dealloc {
@@ -159,6 +184,7 @@ static NSMutableArray<NSArray *> *pendingNotifications;
         if (pushPrimerManager.pushPermissionStatus == CTPushEnabled) {
             filteredInAppNotifs = [self filterRFPInApps:filteredInAppNotifs];
         }
+        //Partition immediate delayed inApps here
         [self.inAppStore enqueueInApps:filteredInAppNotifs];
         
         [CTUtils runSyncMainQueue:^{
@@ -175,6 +201,51 @@ static NSMutableArray<NSArray *> *pendingNotifications;
     } @catch (NSException *e) {
         CleverTapLogInternal(self.config.logLevel, @"%@: InApp notification handling error: %@", self, e.debugDescription);
     }
+}
+
+- (void)scheduleDelayedInAppsForAllModes:(NSArray<NSDictionary *> *)inappNotifs {
+    if (inappNotifs.count <= 0) return;
+    __weak typeof(self) weakSelf = self;
+    CleverTapLogDebug(self.config.logLevel, @"Scheduling %lu delayed inApps", (unsigned long)inappNotifs.count);
+    [_inAppDelayManager scheduleInApps:inappNotifs onComplete:^(CTDelayedInAppResult *result) {
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return;
+        switch (result.type) {
+            case CTDelayedInAppResultTypeSuccess: {
+                NSMutableDictionary *mutableData = [result.data mutableCopy];
+                [strongSelf.inAppStore updateTTL:mutableData];
+                [strongSelf _addInAppNotificationsToQueue:@[mutableData]];
+                break;
+            }
+            case CTDelayedInAppResultTypeError: break;
+            case CTDelayedInAppResultTypeDiscarded: break;
+        }
+    }];
+}
+
+- (void)scheduleInActionInApps:(NSArray *)inappNotifs {
+    if (inappNotifs.count <= 0) return;
+    __weak typeof(self) weakSelf = self;
+    CleverTapLogDebug(self.config.logLevel, @"Scheduling %lu inaction inApps", (unsigned long)inappNotifs.count);
+    [_inAppInActionManager scheduleInApps:inappNotifs onComplete:^(CTInActionResult *result) {
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return;
+        
+        switch (result.type) {
+            case CTInActionResultTypeReadyToFetch:
+                [self.instance fetchInactionInApps:result.inActionId];
+                break;
+            case CTInActionResultTypeError:
+                CleverTapLogDebug(self.config.logLevel, @"Error scheduling in-action in-app: %@ for inAppID: %@", result.message, result.inActionId);
+                break;
+            case CTInActionResultTypeDiscarded:
+                CleverTapLogDebug(self.config.logLevel, @"In-action: in-app discarded : %@ for inAppID: %@", result.message, result.inActionId);
+                break;
+            case CTInActionResultTypeCancelled:
+                CleverTapLogDebug(self.config.logLevel, @"Cancelled timer with id: %@", result.inActionId);
+                break;
+        }
+    }];
 }
 
 - (void)_addInAppNotificationInFrontOfQueue:(CTInAppNotification *)inappNotif {
@@ -250,7 +321,7 @@ static NSMutableArray<NSArray *> *pendingNotifications;
     }
 }
 
-- (void)_discardInAppNotifications {
+- (void)_discardInAppNotifications:(BOOL)dismissInAppIfVisible {
     if ([CTUIUtils runningInsideAppExtension]) {
         CleverTapLogDebug(self.config.logLevel, @"%@: discardInAppNotifications is a no-op in an app extension.", self);
         return;
@@ -258,6 +329,11 @@ static NSMutableArray<NSArray *> *pendingNotifications;
     if (!self.config.analyticsOnly) {
         self.inAppRenderingStatus = CleverTapInAppDiscard;
         CleverTapLogDebug(self.config.logLevel, @"%@: InApp Notifications will be discarded till resumeInAppNotifications() is not called again", self);
+        
+        if (dismissInAppIfVisible) {
+            CleverTapLogDebug(self.config.logLevel, @"%@: Hiding InApp if visible.", self);
+            [[self class] hideCurrentInAppDisplayController];
+        }
     }
 }
 
@@ -274,13 +350,13 @@ static NSMutableArray<NSArray *> *pendingNotifications;
 
 - (void)_showNotificationIfAvailable {
     if ([CTUIUtils runningInsideAppExtension]) return;
-
     if (self.inAppRenderingStatus == CleverTapInAppSuspend) {
         CleverTapLogDebug(self.config.logLevel, @"%@: InApp Notifications are set to be suspended, not showing the InApp Notification", self);
         return;
     }
 
     @try {
+        //Immediate inapps
         NSDictionary *inApp = [self.inAppStore peekInApp];
         if (inApp) {
             // Prepare the in-app for display
@@ -504,6 +580,19 @@ static NSMutableArray<NSArray *> *pendingNotifications;
         [self _showInAppNotificationIfAny];  // auto try the next one
         return;
     }
+    
+    if (self.inAppRenderingStatus == CleverTapInAppDiscard) {
+        CleverTapLogDebug(self.config.logLevel, @"%@: InApp Notifications are set to be discarded, not saving and showing the InApp Notification", self);
+        return;
+    }
+    
+    if (self.inAppRenderingStatus == CleverTapInAppSuspend) {
+        if (self.config.accountId && notification) {
+            CleverTapLogDebug(self.config.logLevel, @"%@: InApp Notifications are set to be suspended, queueing to pending InApps", self);
+            [pendingNotifications addObject:@[self.config.accountId, notification]];
+        }
+        return;
+    }
 
     CTInAppDisplayViewController *controller;
     NSString *errorString = nil;
@@ -635,6 +724,18 @@ static NSMutableArray<NSArray *> *pendingNotifications;
 
 + (NSString *)pendingNotificationKey:(NSString *)accountId {
     return [NSString stringWithFormat:@"%@:%@:onDisplayPendingNotification", [self class], accountId];
+}
+
++ (void)hideCurrentInAppDisplayController {
+    if (currentDisplayController == nil) {
+        CleverTapLogStaticDebug(@"No InApp is currently displayed.");
+        return;
+    }
+    
+    CleverTapLogStaticDebug(@"Hiding current displaying inApp: %@", currentlyDisplayingNotification.campaignId);
+    [CTUtils runSyncMainQueue:^{
+        [currentDisplayController hide:YES];
+    }];
 }
 
 #pragma mark - CTInAppNotificationDisplayDelegate
@@ -784,51 +885,115 @@ static NSMutableArray<NSArray *> *pendingNotifications;
 #pragma mark - Handle InApp test from Push
 - (BOOL)didHandleInAppTestFromPushNotificaton:(NSDictionary * _Nullable)notification {
 #if !CLEVERTAP_NO_INAPP_SUPPORT
-    if ([CTUIUtils runningInsideAppExtension]) {
+    if ([CTUIUtils runningInsideAppExtension] || !notification || [notification count] <= 0) {
         return NO;
     }
     
-    if (!notification || [notification count] <= 0 || !notification[@"wzrk_inapp"]) return NO;
-    
-    @try {
-        [self.instance.impressionManager resetSession];
-        CleverTapLogDebug(self.config.logLevel, @"%@: Received in-app notification from push payload: %@", self, notification);
-        
-        NSString *jsonString = notification[@"wzrk_inapp"];
-        
-        NSMutableDictionary *inapp = [[NSJSONSerialization JSONObjectWithData:[jsonString dataUsingEncoding:NSUTF8StringEncoding]
-                                                                      options:0
-                                                                        error:nil] mutableCopy];
-        if (!inapp) {
-            CleverTapLogDebug(self.config.logLevel, @"%@: Failed to parse the inapp notification as JSON", self);
-            return YES;
-        }
-        
-        // Handle Image Interstitial and Advanced Builder InApp Test (Preview)
-        NSString *inAppPreviewType = notification[CLTAP_INAPP_PREVIEW_TYPE];
-        if ([inAppPreviewType isEqualToString:CLTAP_INAPP_IMAGE_INTERSTITIAL_TYPE] || [inAppPreviewType isEqualToString:CLTAP_INAPP_ADVANCED_BUILDER_TYPE]) {
-            NSMutableDictionary *htmlInapp = [self handleHTMLInAppPreview:inapp];
-            if (!htmlInapp) {
-                return YES; // Failed to handle HTML inapp
-            }
-            inapp = htmlInapp;
-        }
-        
-        float delay = self.isAppActiveForeground ? 0.5 : 2.0;
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t) (delay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            @try {
-                [self prepareNotificationForDisplay:inapp];
-            } @catch (NSException *e) {
-                CleverTapLogDebug(self.config.logLevel, @"%@: Failed to display the inapp notifcation from payload: %@", self, e.debugDescription);
-            }
-        });
-    } @catch (NSException *e) {
-        CleverTapLogDebug(self.config.logLevel, @"%@: Failed to display the inapp notifcation from payload: %@", self, e.debugDescription);
+    // Handle S3 URL path (newer approach)
+    NSString *s3URL = notification[@"wzrk_inapp_s3_url"];
+    if (s3URL) {
+        [self fetchAndDisplayInAppFromS3:s3URL withPreviewType:notification[CLTAP_INAPP_PREVIEW_TYPE]];
         return YES;
     }
     
+    // fallback: handle legacy JSON
+    NSString *jsonString = notification[@"wzrk_inapp"];
+    if (!jsonString) {
+        return NO;
+    }
+    
+    [self.instance.impressionManager resetSession];
+    CleverTapLogDebug(self.config.logLevel, @"%@: Received in-app notification from push payload", self);
+    
+    NSMutableDictionary *inapp = [self parseInAppJSON:jsonString];
+    if (!inapp) {
+        return YES;
+    }
+    
+    // Transform HTML preview if needed
+    inapp = [self transformHTMLPreviewIfNeeded:inapp withType:notification[CLTAP_INAPP_PREVIEW_TYPE]] ?: inapp;
+    
+    [self scheduleInAppDisplay:inapp];
+    
 #endif
     return YES;
+}
+
+#pragma mark - Helper Methods
+
+- (void)fetchAndDisplayInAppFromS3:(NSString *)url withPreviewType:(NSString *)previewType {
+    __weak typeof(self) weakSelf = self;
+    [_instance fetchInAppPreviewContent:url onSuccess:^(NSDictionary *inappJson) {
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return;
+        
+        NSMutableDictionary *inapp = [inappJson mutableCopy];
+        if (!inapp) {
+            return;
+        }
+        
+        // Transform HTML preview if needed
+        inapp = [strongSelf transformHTMLPreviewIfNeeded:inapp withType:previewType] ?: inapp;
+        
+        [CTUtils runAsyncMainQueue:^{
+            [strongSelf scheduleInAppDisplay:inapp];
+        }];
+        
+    }];
+}
+
+- (NSMutableDictionary *)parseInAppJSON:(NSString *)jsonString {
+    if (!jsonString) {
+        return nil;
+    }
+    
+    NSData *data = [jsonString dataUsingEncoding:NSUTF8StringEncoding];
+    NSError *error = nil;
+    NSMutableDictionary *inapp = [NSJSONSerialization JSONObjectWithData:data
+                                                                 options:NSJSONReadingMutableContainers
+                                                                   error:&error];
+    
+    if (!inapp || error) {
+        CleverTapLogDebug(self.config.logLevel, @"%@: Failed to parse inapp notification as JSON: %@", self, error.localizedDescription);
+    }
+    
+    return inapp;
+}
+
+- (NSMutableDictionary *)transformHTMLPreviewIfNeeded:(NSMutableDictionary *)inapp
+                                             withType:(NSString *)previewType {
+    if (!previewType || !inapp) {
+        return nil;
+    }
+    
+    if ([previewType isEqualToString:CLTAP_INAPP_IMAGE_INTERSTITIAL_TYPE] ||
+        [previewType isEqualToString:CLTAP_INAPP_ADVANCED_BUILDER_TYPE]) {
+        
+        NSMutableDictionary *htmlInapp = [self handleHTMLInAppPreview:inapp];
+        if (!htmlInapp) {
+            CleverTapLogDebug(self.config.logLevel, @"%@: Failed to handle HTML inapp preview transformation", self);
+        }
+        return htmlInapp;
+    }
+    
+    return nil;
+}
+
+- (void)scheduleInAppDisplay:(NSMutableDictionary *)inapp {
+    if (!inapp) {
+        return;
+    }
+    
+    float delay = self.isAppActiveForeground ? 0.5 : 2.0;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        @try {
+            [self prepareNotificationForDisplay:inapp];
+        } @catch (NSException *e) {
+            CleverTapLogDebug(self.config.logLevel, @"%@: Failed to display inapp notification: %@",
+                            self, e.debugDescription);
+        }
+    });
 }
 
 - (NSString *)imageInterstitialHtml {
@@ -897,4 +1062,3 @@ static NSMutableArray<NSArray *> *pendingNotifications;
 }
 
 @end
-

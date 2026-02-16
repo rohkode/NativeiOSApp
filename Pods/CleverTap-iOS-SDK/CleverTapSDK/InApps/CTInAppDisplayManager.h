@@ -44,11 +44,12 @@ typedef NS_ENUM(NSInteger, CleverTapInAppRenderingStatus) {
 - (void)prepareNotificationForDisplay:(NSDictionary* _Nonnull)jsonObj;
 - (BOOL)didHandleInAppTestFromPushNotificaton:(NSDictionary* _Nullable)notification;
 - (BOOL)isTemplateRegistered:(NSDictionary *)inAppJSON;
-
+- (void)scheduleInActionInApps:(NSArray * _Nullable)inappNotifs;
+- (void)scheduleDelayedInAppsForAllModes:(NSArray * _Nullable)inappNotifs;
 - (void)_addInAppNotificationsToQueue:(NSArray *)inappNotifs;
 - (void)_showNotificationIfAvailable;
 - (void)_suspendInAppNotifications;
-- (void)_discardInAppNotifications;
+- (void)_discardInAppNotifications:(BOOL)dismissInAppIfVisible;
 - (void)_resumeInAppNotifications;
 - (void)_showInAppNotificationIfAny;
 

@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "CleverTapInstanceConfig.h"
+#import "CTValidationConfig.h"
 #if !CLEVERTAP_NO_INAPP_SUPPORT
 #import "CTInAppDisplayManager.h"
 #import "CTImpressionManager.h"
@@ -29,12 +30,13 @@ NS_ASSUME_NONNULL_BEGIN
 @property (atomic, retain, nullable) NSString *medium;
 @property (atomic, retain, nullable) NSString *campaign;
 @property (atomic, retain, nullable) NSDictionary *wzrkParams;
+@property (atomic, assign) BOOL encryptionInTransitFailed;
 
 - (instancetype)init NS_UNAVAILABLE;
 #if !CLEVERTAP_NO_INAPP_SUPPORT
-- (instancetype)initWithConfig:(CleverTapInstanceConfig *)config impressionManager:(CTImpressionManager *)impressionManager inAppStore:(CTInAppStore *)inAppStore;
+- (instancetype)initWithConfig:(CleverTapInstanceConfig *)config impressionManager:(CTImpressionManager *)impressionManager inAppStore:(CTInAppStore *)inAppStore validationConfig:(CTValidationConfig*)validationConfig;
 #endif
-- (instancetype)initWithConfig:(CleverTapInstanceConfig *)config;
+- (instancetype)initWithConfig:(CleverTapInstanceConfig *)config validationConfig:(CTValidationConfig*)validationConfig;
 - (void)updateSessionStateOnLaunch;
 - (void)updateSessionTime:(long)ts;
 - (void)createSessionIfNeeded;

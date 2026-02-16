@@ -3,9 +3,11 @@
 <plist version="1.0">
 <dict>
 	<key>CleverTapAccountID</key>
-	<string>468-8W9-K96Z</string>
+	<string>886-85W-7Z7Z</string>
 	<key>CleverTapToken</key>
-	<string>c0b-b64</string>
+	<string>05b-6bb</string>
+	<key>CleverTapDisableIDFV</key>
+	<true/>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
