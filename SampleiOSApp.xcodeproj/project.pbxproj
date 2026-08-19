@@ -13,11 +13,12 @@
 		D54B1B082BFDF0B800D23705 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D54B1B072BFDF0B800D23705 /* NotificationService.swift */; };
 		D54B1B0C2BFDF0B800D23705 /* PushRich.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D54B1B052BFDF0B800D23705 /* PushRich.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		D59EE8262A24BDDB000F507A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D59EE8252A24BDDB000F507A /* AppDelegate.swift */; };
-		D59EE8282A24BDDB000F507A /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D59EE8272A24BDDB000F507A /* SceneDelegate.swift */; };
 		D59EE82A2A24BDDB000F507A /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D59EE8292A24BDDB000F507A /* ViewController.swift */; };
 		D59EE82D2A24BDDB000F507A /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D59EE82B2A24BDDB000F507A /* Main.storyboard */; };
 		D59EE82F2A24BDDD000F507A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D59EE82E2A24BDDD000F507A /* Assets.xcassets */; };
 		D59EE8322A24BDDD000F507A /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D59EE8302A24BDDD000F507A /* LaunchScreen.storyboard */; };
+		D5ACD6953034645E00B75A5E /* BottomSheetTemplateProducer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5ACD6943034645A00B75A5E /* BottomSheetTemplateProducer.swift */; };
+		D5ACD6973034648900B75A5E /* BottomSheetPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5ACD6963034648700B75A5E /* BottomSheetPresenter.swift */; };
 		D5FB9BA22E266CEF0012AFDC /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D5FC56C62E17B53E00B2AC68 /* UserNotifications.framework */; };
 		D5FB9BA32E266CEF0012AFDC /* UserNotificationsUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D5FC56C82E17B53F00B2AC68 /* UserNotificationsUI.framework */; };
 		D5FB9BAD2E266CEF0012AFDC /* CTContentExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D5FB9BA12E266CEF0012AFDC /* CTContentExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -92,7 +93,6 @@
 		D59A1A182C9BFB2800092B46 /* PushRich.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PushRich.entitlements; sourceTree = "<group>"; };
 		D59EE8222A24BDDB000F507A /* SampleiOSApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SampleiOSApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D59EE8252A24BDDB000F507A /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		D59EE8272A24BDDB000F507A /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		D59EE8292A24BDDB000F507A /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		D59EE82C2A24BDDB000F507A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		D59EE82E2A24BDDD000F507A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -100,6 +100,8 @@
 		D59EE8332A24BDDD000F507A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		D59EE8382A24BDDD000F507A /* SampleiOSAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SampleiOSAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D59EE8422A24BDDD000F507A /* SampleiOSAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SampleiOSAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D5ACD6943034645A00B75A5E /* BottomSheetTemplateProducer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottomSheetTemplateProducer.swift; sourceTree = "<group>"; };
+		D5ACD6963034648700B75A5E /* BottomSheetPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottomSheetPresenter.swift; sourceTree = "<group>"; };
 		D5CC0BF42C8AF689007C18C0 /* CTNotificationService.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = CTNotificationService.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		D5FB9BA12E266CEF0012AFDC /* CTContentExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CTContentExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		D5FB9BB22E266CFE0012AFDC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -230,9 +232,10 @@
 		D59EE8242A24BDDB000F507A /* SampleiOSApp */ = {
 			isa = PBXGroup;
 			children = (
+				D5ACD6963034648700B75A5E /* BottomSheetPresenter.swift */,
+				D5ACD6943034645A00B75A5E /* BottomSheetTemplateProducer.swift */,
 				D568E9D72BA04D2200D1E914 /* SampleiOSApp.entitlements */,
 				D59EE8252A24BDDB000F507A /* AppDelegate.swift */,
-				D59EE8272A24BDDB000F507A /* SceneDelegate.swift */,
 				D59EE8292A24BDDB000F507A /* ViewController.swift */,
 				D59EE82B2A24BDDB000F507A /* Main.storyboard */,
 				D59EE82E2A24BDDD000F507A /* Assets.xcassets */,
@@ -291,8 +294,6 @@
 				D5FB9BAC2E266CEF0012AFDC /* PBXTargetDependency */,
 			);
 			name = SampleiOSApp;
-			packageProductDependencies = (
-			);
 			productName = SampleiOSApp;
 			productReference = D59EE8222A24BDDB000F507A /* SampleiOSApp.app */;
 			productType = "com.apple.product-type.application";
@@ -389,8 +390,6 @@
 				Base,
 			);
 			mainGroup = D59EE8192A24BDDB000F507A;
-			packageReferences = (
-			);
 			productRefGroup = D59EE8232A24BDDB000F507A /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -477,9 +476,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-SampleiOSApp/Pods-SampleiOSApp-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-SampleiOSApp/Pods-SampleiOSApp-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -545,9 +548,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D5ACD6973034648900B75A5E /* BottomSheetPresenter.swift in Sources */,
 				D59EE82A2A24BDDB000F507A /* ViewController.swift in Sources */,
 				D59EE8262A24BDDB000F507A /* AppDelegate.swift in Sources */,
-				D59EE8282A24BDDB000F507A /* SceneDelegate.swift in Sources */,
+				D5ACD6953034645E00B75A5E /* BottomSheetTemplateProducer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

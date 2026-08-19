@@ -22,6 +22,7 @@
 #import "CleverTapUTMDetail.h"
 #import "CleverTapJSInterface.h"
 #import "CleverTap+DisplayUnit.h"
+#import "CleverTapDisplayUnitCache.h"
 #import "CleverTap+FeatureFlags.h"
 #import "CleverTap+ProductConfig.h"
 #import "CleverTapPushNotificationDelegate.h"
@@ -45,8 +46,17 @@
 #import "CTInAppStore.h"
 #import "CTSwitchUserDelegate.h"
 #import "CTDelayedInAppResult.h"
-#import "CTInActionResult.h"
-#import "CTTimerResult.h"
+#import "CTPreferences.h"
+#import "CTUIUtils.h"
+#import "CTValidationConfig.h"
+#import "CleverTapInstanceConfigPrivate.h"
+#import "CTConstants.h"
+#import "CTQueueType.h"
+#import "CTClock.h"
+#import "CTAttachToBatchHeaderDelegate.h"
+#import "CTBatchSentDelegate.h"
+#import "CTMultiDelegateManager.h"
+#import "CTImpressionManager.h"
 
 FOUNDATION_EXPORT double CleverTapSDKVersionNumber;
 FOUNDATION_EXPORT const unsigned char CleverTapSDKVersionString[];
